@@ -12,7 +12,7 @@ targets:
   $default:
     builders:
       # Typically the builder key is just the package name, run
-      # `pub run build_runner doctor` to check your config.
+      # `dart run build_runner doctor` to check your config.
       <builder-key>:
         generate_for:
           # Example glob for only the Dart files under `lib/models`
@@ -98,9 +98,9 @@ targets:
 If you need other configurations in addition to dev and release, you can define
 multiple `build.yaml` files. For instance if you have a `build.debug.yaml` file
 you can build with `--config debug` and this file will be used instead of the
-default `build.yaml`. The dev and release flavors still apply. `pub run
+default `build.yaml`. The dev and release flavors still apply. `dart run
 build_runner serve --config debug` will use the `dev_options` in
-`build.debug.yaml`, while `pub run build_runner build --config debug --release`
+`build.debug.yaml`, while `dart run build_runner build --config debug --release`
 will use the `release_options` in `build.debug.yaml`.
 
 Only one build flavor can be built at a time. It is not possible to have
@@ -163,7 +163,7 @@ global_options:
 And when running the build:
 
 ```
-pub run build_runner build --define=some_package:some_builder=some_option="Priority 6"
+dart run build_runner build --define=some_package:some_builder=some_option="Priority 6"
 ```
 
 ## How can I include additional sources in my build?
@@ -242,7 +242,7 @@ action fails, and a subsequent build has exactly the same inputs for that action
 it will not be rerun - the previous error messages, however, will get reprinted
 to avoid confusion if a build fails with no printed errors. To force the action
 to run again make an edit to any file that is an input to that action, or throw
-away all cached values with `pub run build_runner clean` before starting the
+away all cached values with `dart run build_runner clean` before starting the
 next build.
 
 ## How can I resolve "Skipped compiling" warnings?
@@ -324,3 +324,40 @@ principle being making the tradeoff of worse build times for less resource
 usage on the machine.
 
 See also [Configuring the number of compiler processes](#configuring-the-number-of-compiler-processes).
+
+## How can I setup my editor to work with `build.yaml` files?
+
+A schema for valid keys and values in build configuration files is available on
+[SchemaStore.org](https://www.schemastore.org/json/), but it is not assigned to
+any file names by default. You can configure your editor to use the correct
+schema.
+
+### VS Code
+
+When using VS Code, you can use the [YAML extension] by RedHat to validate the
+schema of build configuration files.
+Add the following snippet to your `settings.json` to use the correct schema for
+`build.yaml` files:
+
+```json
+"yaml.schemas": {
+    "https://json.schemastore.org/dart-build": [
+        "build.yaml",
+        "*.build.yaml",
+        "build.*.yaml"
+    ]
+}
+```
+
+### IntelliJ-based editors (e.g. IDEA, Android Studio, Webstorm)
+
+JetBrains IDEs have builtin support for YAML schema verification, but the
+correct schema for `build.yaml` files needs to be configured here too.
+To do so, open Settings and select "Languages & Frameworks", "Schemas and
+DTDs" and "JSON Schema Mappings".
+Add a new configuration with `https://json.schemastore.org/dart-build.json` as
+a schema URL. The configuration should look similar to this:
+
+![Schema configuration for IDEA based IDEs](images/idea_schema_config.png)
+
+[YAML extension]: https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml

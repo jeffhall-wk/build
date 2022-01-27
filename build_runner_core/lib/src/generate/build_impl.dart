@@ -12,7 +12,6 @@ import 'package:crypto/crypto.dart';
 import 'package:glob/glob.dart';
 import 'package:logging/logging.dart';
 import 'package:path/path.dart' as p;
-import 'package:pedantic/pedantic.dart';
 import 'package:pool/pool.dart';
 import 'package:watcher/watcher.dart';
 
@@ -58,7 +57,7 @@ class BuildImpl {
 
   final AssetGraph assetGraph;
 
-  final BuildScriptUpdates buildScriptUpdates;
+  final BuildScriptUpdates? buildScriptUpdates;
 
   final List<BuildPhase> _buildPhases;
   final PackageGraph _packageGraph;
@@ -69,7 +68,7 @@ class BuildImpl {
   final RunnerAssetWriter _writer;
   final bool _trackPerformance;
   final BuildEnvironment _environment;
-  final String _logPerformanceDir;
+  final String? _logPerformanceDir;
 
   Future<void> beforeExit() => _resourceManager.beforeExit();
 
@@ -90,9 +89,8 @@ class BuildImpl {
         _logPerformanceDir = options.logPerformanceDir;
 
   Future<BuildResult> run(Map<AssetId, ChangeType> updates,
-      {Set<BuildDirectory> buildDirs, Set<BuildFilter> buildFilters}) {
-    buildDirs ??= <BuildDirectory>{};
-    buildFilters ??= {};
+      {Set<BuildDirectory> buildDirs = const <BuildDirectory>{},
+      Set<BuildFilter> buildFilters = const {}}) {
     finalizedReader.reset(_buildPaths(buildDirs), buildFilters);
     return _SingleBuild(this, buildDirs, buildFilters).run(updates)
       ..whenComplete(_resolvers.reset);
@@ -134,7 +132,7 @@ class BuildImpl {
   }
 
   static IsReadable _isReadableAfterBuildFactory(List<BuildPhase> buildPhases) {
-    return (AssetNode node, int phaseNum, AssetWriterSpy writtenAssets) {
+    return (AssetNode node, int phaseNum, AssetWriterSpy? writtenAssets) {
       if (node is GeneratedAssetNode) {
         return Readability.fromPreviousPhase(node.wasOutput && !node.isFailure);
       }
@@ -182,7 +180,7 @@ class _SingleBuild {
   final ResourceManager _resourceManager;
   final RunnerAssetWriter _writer;
   final Set<BuildDirectory> _buildDirs;
-  final String _logPerformanceDir;
+  final String? _logPerformanceDir;
   final _failureReporter = FailureReporter();
 
   int actionsCompletedCount = 0;
@@ -190,8 +188,7 @@ class _SingleBuild {
 
   final pendingActions = SplayTreeMap<int, Set<String>>();
 
-  /// Can't be final since it needs access to [pendingActions].
-  HungActionsHeartbeat hungActionsHeartbeat;
+  late final HungActionsHeartbeat hungActionsHeartbeat;
 
   _SingleBuild(BuildImpl buildImpl, Set<BuildDirectory> buildDirs,
       Set<BuildFilter> buildFilters)
@@ -308,7 +305,7 @@ class _SingleBuild {
         assert(result.performance != null);
         var now = DateTime.now();
         var logPath = p.join(
-            _logPerformanceDir,
+            _logPerformanceDir!,
             '${now.year}-${_twoDigits(now.month)}-${_twoDigits(now.day)}'
             '_${_twoDigits(now.hour)}-${_twoDigits(now.minute)}-'
             '${_twoDigits(now.second)}');
@@ -373,7 +370,7 @@ class _SingleBuild {
       String package, int phaseNumber) async {
     var ids = <AssetId>{};
     var phase = _buildPhases[phaseNumber];
-    var packageNode = _packageGraph[package];
+    var packageNode = _packageGraph[package]!;
 
     await Future.wait(
         _assetGraph.outputsForPhase(package, phaseNumber).map((node) async {
@@ -387,7 +384,7 @@ class _SingleBuild {
       // since the test dir is not part of the build for non-root packages.
       if (!_targetGraph.isVisibleInBuild(node.id, packageNode)) return;
 
-      var input = _assetGraph.get(node.primaryInput);
+      var input = _assetGraph.get(node.primaryInput)!;
       if (input is GeneratedAssetNode) {
         if (input.state != NodeState.upToDate) {
           await _runLazyPhaseForInput(input.phaseNumber, input.primaryInput);
@@ -439,14 +436,14 @@ class _SingleBuild {
   /// Checks whether [node] can be read by this step - attempting to build the
   /// asset if necessary.
   FutureOr<Readability> _isReadableNode(
-      AssetNode node, int phaseNum, AssetWriterSpy writtenAssets) {
+      AssetNode node, int phaseNum, AssetWriterSpy? writtenAssets) {
     if (node is GeneratedAssetNode) {
       if (node.phaseNumber > phaseNum) {
         return Readability.notReadable;
       } else if (node.phaseNumber == phaseNum) {
         // allow a build step to read its outputs (contained in writtenAssets)
         final isInBuild = _buildPhases[phaseNum] is InBuildPhase &&
-            writtenAssets.assetsWritten.contains(node.id);
+            (writtenAssets?.assetsWritten.contains(node.id) ?? true);
 
         return isInBuild ? Readability.ownOutput : Readability.notReadable;
       }
@@ -477,9 +474,7 @@ class _SingleBuild {
         var builderOutputs = expectedOutputs(builder, input);
 
         // Add `builderOutputs` to the primary outputs of the input.
-        var inputNode = _assetGraph.get(input);
-        assert(inputNode != null,
-            'Inputs should be known in the static graph. Missing $input');
+        var inputNode = _assetGraph.get(input)!;
         assert(
             inputNode.primaryOutputs.containsAll(builderOutputs),
             'input $input with builder $builder missing primary outputs: \n'
@@ -541,7 +536,7 @@ class _SingleBuild {
                 }));
         actionsCompletedCount++;
         hungActionsHeartbeat.ping();
-        pendingActions[phaseNumber].remove(actionDescription);
+        pendingActions[phaseNumber]!.remove(actionDescription);
 
         // Reset the state for all the `builderOutputs` nodes based on what was
         // read and written.
@@ -598,10 +593,7 @@ class _SingleBuild {
       PostProcessBuilder builder,
       PostProcessAnchorNode anchorNode) async {
     var input = anchorNode.primaryInput;
-    var inputNode = _assetGraph.get(input);
-    assert(inputNode != null,
-        'Inputs should be known in the static graph. Missing $input');
-
+    var inputNode = _assetGraph.get(input)!;
     var wrappedWriter = AssetWriterSpy(_writer);
     var wrappedReader = SingleStepReader(
         _reader,
@@ -659,13 +651,13 @@ class _SingleBuild {
       if (assetId != input) {
         throw InvalidOutputException(assetId, 'Can only delete primary input');
       }
-      _assetGraph.get(assetId).deletedBy.add(anchorNode.id);
+      _assetGraph.get(assetId)!.deletedBy.add(anchorNode.id);
     }).catchError((void _) {
       // Errors tracked through the logger
     });
     actionsCompletedCount++;
     hungActionsHeartbeat.ping();
-    pendingActions[phaseNum].remove(actionDescription);
+    pendingActions[phaseNum]!.remove(actionDescription);
 
     var assetsWritten = wrappedWriter.assetsWritten.toSet();
 
@@ -748,7 +740,7 @@ class _SingleBuild {
   Future<GlobAssetNode> _getUpdatedGlobNode(
       Glob glob, String package, int phaseNum) {
     var globNodeId = GlobAssetNode.createId(package, glob, phaseNum);
-    var globNode = _assetGraph.get(globNodeId) as GlobAssetNode;
+    var globNode = _assetGraph.get(globNodeId) as GlobAssetNode?;
     if (globNode == null) {
       globNode = GlobAssetNode(
           globNodeId, glob, phaseNum, NodeState.definitelyNeedsUpdate);
@@ -758,7 +750,7 @@ class _SingleBuild {
     return toFuture(doAfter(
         // ignore: void_checks
         _updateGlobNodeIfNecessary(globNode),
-        (_) => globNode));
+        (_) => globNode!));
   }
 
   FutureOr<void> _updateGlobNodeIfNecessary(GlobAssetNode globNode) {
@@ -769,8 +761,7 @@ class _SingleBuild {
           .packageNodes(globNode.id.package)
           .where((n) => n.isReadable && n.isValidInput)
           .where((n) =>
-              n is! GeneratedAssetNode ||
-              (n as GeneratedAssetNode).phaseNumber < globNode.phaseNumber)
+              n is! GeneratedAssetNode || n.phaseNumber < globNode.phaseNumber)
           .where((n) => globNode.glob.matches(n.id.path))
           .toList();
 
@@ -792,10 +783,10 @@ class _SingleBuild {
         ..results = actualMatches
         ..inputs = HashSet.of(potentialNodes.map((n) => n.id))
         ..state = NodeState.upToDate
-        ..lastKnownDigest =
-            md5.convert(utf8.encode(globNode.results.join(' ')));
+        ..lastKnownDigest = md5.convert(utf8.encode(actualMatches.join(' ')));
 
-      unawaited(_lazyGlobs.remove(globNode.id));
+      // TODO: remove ?? fallback after 2.15 sdk.
+      unawaited(_lazyGlobs.remove(globNode.id) ?? Future.value());
     });
   }
 
@@ -806,19 +797,18 @@ class _SingleBuild {
     var combinedBytes = Uint8List.fromList(List.filled(16, 0));
     void _combine(Uint8List other) {
       assert(other.length == 16);
-      assert(other is Uint8List);
       for (var i = 0; i < 16; i++) {
         combinedBytes[i] ^= other[i];
       }
     }
 
-    var builderOptionsNode = _assetGraph.get(builderOptionsId);
-    _combine(builderOptionsNode.lastKnownDigest.bytes as Uint8List);
+    var builderOptionsNode = _assetGraph.get(builderOptionsId)!;
+    _combine(builderOptionsNode.lastKnownDigest!.bytes as Uint8List);
 
     // Limit the total number of digests we are computing at a time. Otherwise
     // this can overload the event queue.
     await Future.wait(ids.map((id) async {
-      var node = _assetGraph.get(id);
+      var node = _assetGraph.get(id)!;
       if (node is GlobAssetNode) {
         await _updateGlobNodeIfNecessary(node);
       } else if (!await reader.canRead(id)) {
@@ -831,7 +821,7 @@ class _SingleBuild {
       } else {
         node.lastKnownDigest ??= await reader.digest(id);
       }
-      _combine(node.lastKnownDigest.bytes as Uint8List);
+      _combine(node.lastKnownDigest!.bytes as Uint8List);
     }));
 
     return Digest(combinedBytes);
@@ -852,7 +842,7 @@ class _SingleBuild {
       AssetWriterSpy writer,
       String actionDescription,
       Iterable<ErrorReport> errors,
-      {Set<AssetId> unusedAssets}) async {
+      {Set<AssetId>? unusedAssets}) async {
     if (outputs.isEmpty) return;
     var usedInputs = unusedAssets != null
         ? reader.assetsRead.difference(unusedAssets)
@@ -913,8 +903,7 @@ class _SingleBuild {
     var removedInputs = node.inputs.difference(updatedInputs);
     node.inputs.removeAll(removedInputs);
     for (var input in removedInputs) {
-      var inputNode = _assetGraph.get(input);
-      assert(inputNode != null, 'Asset Graph is missing $input');
+      var inputNode = _assetGraph.get(input)!;
       inputNode.outputs.remove(node.id);
     }
   }
@@ -925,8 +914,7 @@ class _SingleBuild {
     var newInputs = updatedInputs.difference(node.inputs);
     node.inputs.addAll(newInputs);
     for (var input in newInputs) {
-      var inputNode = _assetGraph.get(input);
-      assert(inputNode != null, 'Asset Graph is missing $input');
+      var inputNode = _assetGraph.get(input)!;
       inputNode.outputs.add(node.id);
     }
   }

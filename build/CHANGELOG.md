@@ -1,3 +1,53 @@
+## 2.2.1
+
+- Fix a bug where builders were allowed to write to the same asset multiple
+  times.
+
+## 2.2.0
+
+- Allow reusing the values held by `Resource`s when the resource has a `dispose`
+  method. Previously the instances were discarded and recreated for every build
+  even if they had tried to clean up their own state.
+- Allow the latest analyzer.
+
+## 2.1.1
+
+- Throw an `ArgumentError` if an expected output matches the input.
+- Bump min sdk to 2.14.0.
+
+## 2.1.0
+
+- Expand the expressiveness of `buildExtensions` include capture groups,
+  enabling directory moves. For more information on this feature, see
+  [capture groups](https://github.com/dart-lang/build/blob/master/docs/writing_a_builder.md#capture-groups)
+- Add an `allowedOutputs` getter to `BuildStep`. It returns assets that may be
+  written in that step.
+
+## 2.0.3
+
+- Allow analyzer version 2.x.x.
+
+## 2.0.2
+
+- Handle failed resolvers in `buildStep.complete`.
+
+## 2.0.1
+
+- Require package:async version 2.5.0 and package:collection version 1.15.0.
+
+## 2.0.0
+
+- Migrate to null-safety
+- __Breaking__: Remove the deprecated `rootPackage` argument to `runBuilder`
+- __Breaking__: Change the first argument to `AssetId.resolve` from a `String`
+  (which previously was required to be a valid URI) to a `Uri` instance. Call
+  sites which have static errors can wrap the argument with `Uri.parse()`.
+
+## 1.6.3
+
+- Use latest analyzer version `1.x`.
+- Use latest glob version `2.x`.
+
 ## 1.6.2
 
 - Fix `AssetId.resolve` for empty uris
@@ -19,7 +69,7 @@
 ## 1.5.1
 
 - Expose a set of valid inputs in `InvalidInputException`.
-- `AssetReader` implementations are now expected to throw 
+- `AssetReader` implementations are now expected to throw
   `InvalidInputException`s when reading invalid inputs.
   The check has been removed from the build step implementation.
 

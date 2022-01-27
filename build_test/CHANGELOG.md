@@ -1,3 +1,44 @@
+## 2.1.5
+
+- Allow the latest analyzer.
+
+## 2.1.4
+
+- Update `pub run` references to `dart run`.
+- Drop package:pedantic dependency and replace it with package:lints.
+
+## 2.1.3
+
+- Use `allowedOutputs` in `TestBuilder` instead of computing them again.
+
+## 2.1.2
+
+- Allow the latest `package:test_core`.
+
+## 2.1.1
+
+- Allow analyzer version 2.x.x.
+
+## 2.1.0
+
+- Migrate internal builders of this package to null safety
+- Require build_config version 1.0.0.
+
+## 2.0.0
+
+- Migrate `package:build_test/build_test.dart` to null safety.
+- Update to build `2.x`.
+- Update to build_resolvers `2.x`.
+
+## 1.3.7
+
+- Update to analyzer `1.x`.
+- Update to glob `2.x`.
+
+## 1.3.6
+
+- Allow the null safe pre-release version of `html`.
+
 ## 1.3.5
 
 - Allow the null safe pre-release version of `package_config` and `watcher`.

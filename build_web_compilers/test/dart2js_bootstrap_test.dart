@@ -5,20 +5,19 @@
 import 'dart:async';
 
 import 'package:build/experiments.dart';
+import 'package:build_modules/build_modules.dart';
 import 'package:build_test/build_test.dart';
+import 'package:build_web_compilers/build_web_compilers.dart';
 import 'package:logging/logging.dart';
 import 'package:test/test.dart';
-
-import 'package:build_web_compilers/build_web_compilers.dart';
-import 'package:build_modules/build_modules.dart';
 
 import 'util.dart';
 
 void main() {
-  Map<String, dynamic> assets;
+  late Map<String, Object> assets;
   final platform = dart2jsPlatform;
 
-  StreamSubscription<LogRecord> logSubscription;
+  late StreamSubscription<LogRecord> logSubscription;
   setUp(() {
     Logger.root.level = Level.ALL;
     logSubscription = Logger.root.onRecord.listen((r) => printOnFailure('$r'));
@@ -149,13 +148,13 @@ void main() {
         // Check the inlined constant value for soundness
         var expectedOutputs = {
           'a|web/sound.dart.js': decodedMatches(allOf(
-              contains('printString(String(false))'),
-              isNot(contains('printString(String(true))')))),
+              contains('NullSafetyMode.sound'),
+              isNot(contains('NullSafetyMode.unsound')))),
           'a|web/sound.dart.js.map': anything,
           'a|web/sound.dart.js.tar.gz': anything,
           'a|web/unsound.dart.js': decodedMatches(allOf(
-              contains('printString(String(true))'),
-              isNot(contains('printString(String(false))')))),
+              contains('NullSafetyMode.unsound'),
+              isNot(contains('NullSafetyMode.sound')))),
           'a|web/unsound.dart.js.map': anything,
           'a|web/unsound.dart.js.tar.gz': anything,
         };

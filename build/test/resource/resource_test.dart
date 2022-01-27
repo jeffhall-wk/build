@@ -4,12 +4,11 @@
 @TestOn('vm')
 import 'dart:async';
 
+import 'package:build/build.dart';
 import 'package:test/test.dart';
 
-import 'package:build/build.dart';
-
 void main() {
-  ResourceManager resourceManager;
+  late ResourceManager resourceManager;
   setUp(() {
     resourceManager = ResourceManager();
   });
@@ -31,20 +30,17 @@ void main() {
       expect(third, 1);
     });
 
-    test('calls dispose callback with last instance', () async {
-      var disposed = false;
+    test('reuses instances when a dispose can clean the state', () async {
       var last = 0;
-      var intResource = Resource(() => last, dispose: (int instance) {
-        expect(instance, last);
-        last++;
-        disposed = true;
-      });
+      var intResource = Resource(() => last++,
+          dispose: expectAsync1((int instance) {
+            expect(instance, last - 1);
+          }, max: -1));
       var first = await resourceManager.fetch(intResource);
       expect(first, 0);
       await resourceManager.disposeAll();
-      expect(disposed, true);
       var second = await resourceManager.fetch(intResource);
-      expect(second, 1);
+      expect(second, 0);
     });
 
     test('can asynchronously get resources', () async {

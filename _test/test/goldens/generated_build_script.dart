@@ -1,10 +1,4 @@
-// Ensure that the build script itself is not opted in to null safety,
-// instead of taking the language version from the current package.
-//
-// @dart=2.9
-//
 // ignore_for_file: directives_ordering
-
 import 'package:build_runner_core/build_runner_core.dart' as _i1;
 import 'package:build_test/builder.dart' as _i2;
 import 'package:build_config/build_config.dart' as _i3;
@@ -115,13 +109,14 @@ final _builders = <_i1.BuilderApplication>[
         r'test/**.node_test.dart',
         r'test/**.vm_test.dart'
       ]),
-      defaultOptions: _i8.BuilderOptions({
-        'dart2js_args': ['--minify']
+      defaultOptions: const _i8.BuilderOptions({
+        r'dart2js_args': [r'--minify']
       }),
-      defaultDevOptions: _i8.BuilderOptions({
-        'dart2js_args': ['--enable-asserts']
+      defaultDevOptions: const _i8.BuilderOptions({
+        r'dart2js_args': [r'--enable-asserts']
       }),
-      defaultReleaseOptions: _i8.BuilderOptions({'compiler': 'dart2js'}),
+      defaultReleaseOptions:
+          const _i8.BuilderOptions({r'compiler': r'dart2js'}),
       appliesBuilders: const [
         r'build_web_compilers:dart2js_archive_extractor'
       ]),
@@ -131,14 +126,15 @@ final _builders = <_i1.BuilderApplication>[
   _i1.applyPostProcess(r'build_modules:module_cleanup', _i5.moduleCleanup),
   _i1.applyPostProcess(r'build_web_compilers:dart2js_archive_extractor',
       _i7.dart2jsArchiveExtractor,
-      defaultReleaseOptions: _i8.BuilderOptions({'filter_outputs': true})),
+      defaultReleaseOptions:
+          const _i8.BuilderOptions({r'filter_outputs': true})),
   _i1.applyPostProcess(
       r'build_web_compilers:dart_source_cleanup', _i7.dartSourceCleanup,
-      defaultReleaseOptions: _i8.BuilderOptions({'enabled': true})),
+      defaultReleaseOptions: const _i8.BuilderOptions({r'enabled': true})),
   _i1.applyPostProcess(
       r'provides_builder:some_post_process_builder', _i4.somePostProcessBuilder)
 ];
-void main(List<String> args, [_i9.SendPort sendPort]) async {
+void main(List<String> args, [_i9.SendPort? sendPort]) async {
   var result = await _i10.run(args, _builders);
   sendPort?.send(result);
   _i11.exitCode = result;

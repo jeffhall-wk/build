@@ -1,11 +1,13 @@
-dart:
+sdk:
+- 2.14.0
 - dev
 
 stages:
 - analyze_and_format:
-  - group:
-    - dartfmt: sdk
-    - dartanalyzer: --fatal-infos --fatal-warnings .
+  - analyze: --fatal-infos .
+  - format:
+    sdk:
+    - dev
 - unit_test:
   - test: --test-randomize-ordering-seed=random
     os:

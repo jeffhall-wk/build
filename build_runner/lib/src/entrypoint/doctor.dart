@@ -7,6 +7,7 @@ import 'dart:async';
 import 'package:build/build.dart';
 import 'package:build_config/build_config.dart';
 import 'package:build_runner_core/build_runner_core.dart';
+// ignore: implementation_imports
 import 'package:build_runner_core/src/generate/phase.dart';
 import 'package:io/io.dart';
 import 'package:logging/logging.dart';
@@ -29,7 +30,7 @@ class DoctorCommand extends BuildRunnerCommand {
   @override
   Future<int> run() async {
     final options = readOptions();
-    final verbose = options.verbose ?? false;
+    final verbose = options.verbose;
     Logger.root.level = verbose ? Level.ALL : Level.INFO;
     final logSubscription =
         Logger.root.onRecord.listen(stdIOLogListener(verbose: verbose));
@@ -52,10 +53,10 @@ class DoctorCommand extends BuildRunnerCommand {
   Future<Map<String, BuilderDefinition>> _loadBuilderDefinitions() async {
     final packageGraph = await PackageGraph.forThisPackage();
     final buildConfigOverrides = await findBuildConfigOverrides(
-        packageGraph, null, FileBasedAssetReader(packageGraph));
+        packageGraph, FileBasedAssetReader(packageGraph));
     Future<BuildConfig> _packageBuildConfig(PackageNode package) async {
       if (buildConfigOverrides.containsKey(package.name)) {
-        return buildConfigOverrides[package.name];
+        return buildConfigOverrides[package.name]!;
       }
       try {
         return await BuildConfig.fromBuildConfigDir(package.name,
@@ -84,7 +85,7 @@ class DoctorCommand extends BuildRunnerCommand {
   bool _checkBuildExtensions(BuilderApplication builderApplication,
       Map<String, BuilderDefinition> config) {
     var phases = builderApplication.buildPhaseFactories
-        .map((f) => f(PackageNode(null, null, null, null, isRoot: true),
+        .map((f) => f(PackageNode('_\$fake', '/fake', null, null, isRoot: true),
             BuilderOptions.empty, InputSet.anything, InputSet.anything, true))
         .whereType<InBuildPhase>()
         .toList();
@@ -92,7 +93,8 @@ class DoctorCommand extends BuildRunnerCommand {
     if (!config.containsKey(builderApplication.builderKey)) return false;
 
     var problemFound = false;
-    var allowed = Map.of(config[builderApplication.builderKey].buildExtensions);
+    var allowed =
+        Map.of(config[builderApplication.builderKey]!.buildExtensions);
     for (final phase in phases.whereType<InBuildPhase>()) {
       final extensions = phase.builder.buildExtensions;
       for (final extension in extensions.entries) {
@@ -103,7 +105,7 @@ class DoctorCommand extends BuildRunnerCommand {
           problemFound = true;
           continue;
         }
-        final allowedOutputs = List.of(allowed[extension.key]);
+        final allowedOutputs = List.of(allowed[extension.key]!);
         for (final output in extension.value) {
           if (!allowedOutputs.contains(output)) {
             logger.warning('Builder ${builderApplication.builderKey} '

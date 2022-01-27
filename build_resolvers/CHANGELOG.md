@@ -1,3 +1,47 @@
+## 2.0.7-dev
+
+## 2.0.6
+
+- Allow the latest analyzer.
+
+## 2.0.5
+
+- Consider files without a `.dart` extension as not Dart libraries. Previously
+  the `isLibrary` getter was behaving like `isNotDartPartFile` which included
+  many assets that weren't Dart at all. This is potentially breaking if any
+  builders were intentionally resolving files with different extensions, but
+  will give a more predictable result for the majority of cases.
+- Update usages of deprecated analyzer apis.
+- Require at least analyzer `2.1.0`.
+- Support upcoming analyzer changes to `UriResolver`.
+
+## 2.0.4
+
+- Allow analyzer version 2.x.x.
+
+## 2.0.3
+
+- Fix an issue where the build process would hang if the resolver fails to
+  properly initialize.
+
+## 2.0.2
+
+- Add more context to the outdated analyzer version message. It now provides
+  different suggestions depending on if you are on the latest analyzer.
+
+## 2.0.1
+
+- Update to allow package:graphs 2.0.0.
+
+## 2.0.0
+
+- Migrate to null-safety
+- Update to build `2.x`.
+
+## 1.5.4
+
+- Allow analyzer 1.0.0.
+
 ## 1.5.3
 
 - Allow the null safe pre-release of `package_config`.

@@ -1,9 +1,6 @@
 <p align="center">
   Vm compilers for users of <a href="https://pub.dev/packages/build"><code>package:build</code></a>.
   <br>
-  <a href="https://travis-ci.org/dart-lang/build">
-    <img src="https://travis-ci.org/dart-lang/build.svg?branch=master" alt="Build Status" />
-  </a>
   <a href="https://github.com/dart-lang/build/labels/package%3A%20build_vm_compilers">
     <img src="https://img.shields.io/github/issues-raw/dart-lang/build/package%3A%20build_vm_compilers.svg" alt="Issues related to build_vm_compilers" />
   </a>
@@ -32,7 +29,7 @@ multiple entrypoints, instead of doing a monolithic compile of each entrypoint
 like the Dart VM would normally do on each run.
 
 **Note**: If you want to use this package for running tests with
-`pub run build_runner test` you will also need a `build_test` dev dependency.
+`dart run build_runner test` you will also need a `build_test` dev dependency.
 
 ## Usage
 

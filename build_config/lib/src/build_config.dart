@@ -7,7 +7,6 @@ import 'dart:io';
 
 import 'package:checked_yaml/checked_yaml.dart';
 import 'package:json_annotation/json_annotation.dart';
-import 'package:meta/meta.dart';
 import 'package:path/path.dart' as p;
 import 'package:pubspec_parse/pubspec_parse.dart';
 
@@ -21,7 +20,7 @@ import 'key_normalization.dart';
 part 'build_config.g.dart';
 
 /// The parsed values from a `build.yaml` file.
-@JsonSerializable(createToJson: false, disallowUnrecognizedKeys: true)
+@JsonSerializable()
 class BuildConfig {
   /// Returns a parsed [BuildConfig] file in [path], if one exist, otherwise a
   /// default config.
@@ -68,10 +67,12 @@ class BuildConfig {
   @JsonKey(name: 'targets', fromJson: _buildTargetsFromJson)
   final Map<String, BuildTarget> buildTargets;
 
-  @JsonKey(name: 'global_options')
+  /// Used to represent no build target supplied, returned from
+  /// [_buildTargetsFromJson].
+  static final _placeholderBuildTarget = <String, BuildTarget>{};
+
   final Map<String, GlobalBuilderConfig> globalOptions;
 
-  @JsonKey(name: 'additional_public_assets')
   final List<String> additionalPublicAssets;
 
   /// The default config if you have no `build.yaml` file.
@@ -101,7 +102,7 @@ class BuildConfig {
     String packageName,
     Iterable<String> dependencies,
     String configYaml, {
-    String configYamlPath,
+    String? configYamlPath,
   }) {
     try {
       return checkedYamlDecode(
@@ -124,19 +125,21 @@ class BuildConfig {
   }
 
   BuildConfig({
-    String packageName,
-    @required Map<String, BuildTarget> buildTargets,
-    Map<String, GlobalBuilderConfig> globalOptions,
-    Map<String, BuilderDefinition> builderDefinitions,
-    Map<String, PostProcessBuilderDefinition> postProcessBuilderDefinitions =
+    String? packageName,
+    required Map<String, BuildTarget> buildTargets,
+    Map<String, GlobalBuilderConfig>? globalOptions,
+    Map<String, BuilderDefinition>? builderDefinitions,
+    Map<String, PostProcessBuilderDefinition>? postProcessBuilderDefinitions =
         const {},
     this.additionalPublicAssets = const [],
-  })  : buildTargets = buildTargets ??
-            {
-              _defaultTarget(packageName ?? currentPackage): BuildTarget(
-                dependencies: currentPackageDefaultDependencies,
-              )
-            },
+  })  : buildTargets =
+            identical(buildTargets, BuildConfig._placeholderBuildTarget)
+                ? {
+                    _defaultTarget(packageName ?? currentPackage): BuildTarget(
+                      dependencies: currentPackageDefaultDependencies,
+                    )
+                  }
+                : buildTargets,
         globalOptions = (globalOptions ?? const {}).map((key, config) =>
             MapEntry(normalizeBuilderKeyUsage(key, currentPackage), config)),
         builderDefinitions = _normalizeBuilderDefinitions(
@@ -171,9 +174,9 @@ Map<String, T> _normalizeBuilderDefinitions<T>(
     builderDefinitions.map((key, definition) =>
         MapEntry(normalizeBuilderKeyDefinition(key, packageName), definition));
 
-Map<String, BuildTarget> _buildTargetsFromJson(Map json) {
+Map<String, BuildTarget> _buildTargetsFromJson(Map? json) {
   if (json == null) {
-    return null;
+    return BuildConfig._placeholderBuildTarget;
   }
   var targets = json.map((key, target) => MapEntry(
       normalizeTargetKeyDefinition(key as String, currentPackage),

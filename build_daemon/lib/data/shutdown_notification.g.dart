@@ -20,10 +20,10 @@ class _$ShutdownNotificationSerializer
   final String wireName = 'ShutdownNotification';
 
   @override
-  Iterable<Object> serialize(
+  Iterable<Object?> serialize(
       Serializers serializers, ShutdownNotification object,
       {FullType specifiedType = FullType.unspecified}) {
-    final result = <Object>[
+    final result = <Object?>[
       'message',
       serializers.serialize(object.message,
           specifiedType: const FullType(String)),
@@ -37,7 +37,7 @@ class _$ShutdownNotificationSerializer
 
   @override
   ShutdownNotification deserialize(
-      Serializers serializers, Iterable<Object> serialized,
+      Serializers serializers, Iterable<Object?> serialized,
       {FullType specifiedType = FullType.unspecified}) {
     final result = new ShutdownNotificationBuilder();
 
@@ -45,7 +45,7 @@ class _$ShutdownNotificationSerializer
     while (iterator.moveNext()) {
       final key = iterator.current as String;
       iterator.moveNext();
-      final dynamic value = iterator.current;
+      final Object? value = iterator.current;
       switch (key) {
         case 'message':
           result.message = serializers.deserialize(value,
@@ -69,16 +69,15 @@ class _$ShutdownNotification extends ShutdownNotification {
   final int failureType;
 
   factory _$ShutdownNotification(
-          [void Function(ShutdownNotificationBuilder) updates]) =>
+          [void Function(ShutdownNotificationBuilder)? updates]) =>
       (new ShutdownNotificationBuilder()..update(updates)).build();
 
-  _$ShutdownNotification._({this.message, this.failureType}) : super._() {
-    if (message == null) {
-      throw new BuiltValueNullFieldError('ShutdownNotification', 'message');
-    }
-    if (failureType == null) {
-      throw new BuiltValueNullFieldError('ShutdownNotification', 'failureType');
-    }
+  _$ShutdownNotification._({required this.message, required this.failureType})
+      : super._() {
+    BuiltValueNullFieldError.checkNotNull(
+        message, 'ShutdownNotification', 'message');
+    BuiltValueNullFieldError.checkNotNull(
+        failureType, 'ShutdownNotification', 'failureType');
   }
 
   @override
@@ -114,22 +113,23 @@ class _$ShutdownNotification extends ShutdownNotification {
 
 class ShutdownNotificationBuilder
     implements Builder<ShutdownNotification, ShutdownNotificationBuilder> {
-  _$ShutdownNotification _$v;
+  _$ShutdownNotification? _$v;
 
-  String _message;
-  String get message => _$this._message;
-  set message(String message) => _$this._message = message;
+  String? _message;
+  String? get message => _$this._message;
+  set message(String? message) => _$this._message = message;
 
-  int _failureType;
-  int get failureType => _$this._failureType;
-  set failureType(int failureType) => _$this._failureType = failureType;
+  int? _failureType;
+  int? get failureType => _$this._failureType;
+  set failureType(int? failureType) => _$this._failureType = failureType;
 
   ShutdownNotificationBuilder();
 
   ShutdownNotificationBuilder get _$this {
-    if (_$v != null) {
-      _message = _$v.message;
-      _failureType = _$v.failureType;
+    final $v = _$v;
+    if ($v != null) {
+      _message = $v.message;
+      _failureType = $v.failureType;
       _$v = null;
     }
     return this;
@@ -137,14 +137,12 @@ class ShutdownNotificationBuilder
 
   @override
   void replace(ShutdownNotification other) {
-    if (other == null) {
-      throw new ArgumentError.notNull('other');
-    }
+    ArgumentError.checkNotNull(other, 'other');
     _$v = other as _$ShutdownNotification;
   }
 
   @override
-  void update(void Function(ShutdownNotificationBuilder) updates) {
+  void update(void Function(ShutdownNotificationBuilder)? updates) {
     if (updates != null) updates(this);
   }
 
@@ -152,10 +150,13 @@ class ShutdownNotificationBuilder
   _$ShutdownNotification build() {
     final _$result = _$v ??
         new _$ShutdownNotification._(
-            message: message, failureType: failureType);
+            message: BuiltValueNullFieldError.checkNotNull(
+                message, 'ShutdownNotification', 'message'),
+            failureType: BuiltValueNullFieldError.checkNotNull(
+                failureType, 'ShutdownNotification', 'failureType'));
     replace(_$result);
     return _$result;
   }
 }
 
-// ignore_for_file: always_put_control_body_on_new_line,always_specify_types,annotate_overrides,avoid_annotating_with_dynamic,avoid_as,avoid_catches_without_on_clauses,avoid_returning_this,lines_longer_than_80_chars,omit_local_variable_types,prefer_expression_function_bodies,sort_constructors_first,test_types_in_equals,unnecessary_const,unnecessary_new
+// ignore_for_file: always_put_control_body_on_new_line,always_specify_types,annotate_overrides,avoid_annotating_with_dynamic,avoid_as,avoid_catches_without_on_clauses,avoid_returning_this,deprecated_member_use_from_same_package,lines_longer_than_80_chars,omit_local_variable_types,prefer_expression_function_bodies,sort_constructors_first,test_types_in_equals,unnecessary_const,unnecessary_new

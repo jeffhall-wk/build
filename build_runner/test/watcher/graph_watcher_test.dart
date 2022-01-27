@@ -10,7 +10,6 @@ import 'package:build_runner/src/watcher/asset_change.dart';
 import 'package:build_runner/src/watcher/graph_watcher.dart';
 import 'package:build_runner/src/watcher/node_watcher.dart';
 import 'package:build_runner_core/src/package_graph/package_graph.dart';
-import 'package:pedantic/pedantic.dart';
 import 'package:test/test.dart';
 import 'package:watcher/watcher.dart';
 
@@ -22,16 +21,16 @@ void main() {
         package('b', path: '/g/b', type: DependencyType.path): []
       });
       final nodes = {
-        'a': FakeNodeWatcher(graph['a']),
-        'b': FakeNodeWatcher(graph['b']),
-        r'$sdk': FakeNodeWatcher(null),
+        'a': FakeNodeWatcher(graph['a']!),
+        'b': FakeNodeWatcher(graph['b']!),
+        r'$sdk': FakeNodeWatcher(PackageNode('\$sdk', '', null, null)),
       };
       final watcher = PackageGraphWatcher(graph, watch: (node) {
-        return nodes[node.name];
+        return nodes[node.name]!;
       });
 
-      nodes['a'].emitAdd('lib/a.dart');
-      nodes['b'].emitAdd('lib/b.dart');
+      nodes['a']!.emitAdd('lib/a.dart');
+      nodes['b']!.emitAdd('lib/b.dart');
 
       expect(
           watcher.watch(),
@@ -47,19 +46,19 @@ void main() {
         package('b', path: '/g/a/b', type: DependencyType.path): []
       });
       final nodes = {
-        'a': FakeNodeWatcher(graph['a'])..markReady(),
-        'b': FakeNodeWatcher(graph['b'])..markReady(),
+        'a': FakeNodeWatcher(graph['a']!)..markReady(),
+        'b': FakeNodeWatcher(graph['b']!)..markReady(),
       };
       final watcher = PackageGraphWatcher(graph, watch: (node) {
-        return nodes[node.name];
+        return nodes[node.name]!;
       });
 
       final events = <AssetChange>[];
       unawaited(watcher.watch().forEach(events.add));
       await watcher.ready;
 
-      nodes['a'].emitAdd('b/lib/b.dart');
-      nodes['b'].emitAdd('lib/b.dart');
+      nodes['a']!.emitAdd('b/lib/b.dart');
+      nodes['b']!.emitAdd('lib/b.dart');
 
       await pumpEventQueue();
 
@@ -72,12 +71,12 @@ void main() {
         package('b', path: '/g/a/b/', type: DependencyType.hosted): []
       });
       final nodes = {
-        'a': FakeNodeWatcher(graph['a']),
-        r'$sdk': FakeNodeWatcher(null),
+        'a': FakeNodeWatcher(graph['a']!),
+        r'$sdk': FakeNodeWatcher(PackageNode('\$sdk', '', null, null)),
       };
       PackageNodeWatcher noBWatcher(PackageNode node) {
         if (node.name == 'b') throw StateError('No watcher for B!');
-        return nodes[node.name];
+        return nodes[node.name]!;
       }
 
       final watcher = PackageGraphWatcher(graph, watch: noBWatcher);
@@ -97,12 +96,12 @@ void main() {
         package('b', path: '/g/b', type: DependencyType.path): []
       });
       final nodes = {
-        'a': FakeNodeWatcher(graph['a']),
-        'b': FakeNodeWatcher(graph['b']),
-        r'$sdk': FakeNodeWatcher(null),
+        'a': FakeNodeWatcher(graph['a']!),
+        'b': FakeNodeWatcher(graph['b']!),
+        r'$sdk': FakeNodeWatcher(PackageNode('\$sdk', '', null, null)),
       };
       final watcher = PackageGraphWatcher(graph, watch: (node) {
-        return nodes[node.name];
+        return nodes[node.name]!;
       });
       // We have to listen in order for `ready` to complete.
       unawaited(watcher.watch().drain());

@@ -1,4 +1,4 @@
-dart:
+sdk:
 - dev
 
 os:
@@ -7,12 +7,12 @@ os:
 
 stages:
 - analyze_and_format:
-  - dartanalyzer: --fatal-infos --fatal-warnings .
+  - analyze: --fatal-infos .
     os: linux
 - unit_test:
   - group:
-    - command: pub run build_runner test -- -p chrome --test-randomize-ordering-seed=random
-    - command: pub run build_runner test -- -p vm test/configurable_uri_test.dart --test-randomize-ordering-seed=random
+    - command: dart run build_runner test -- -p chrome --test-randomize-ordering-seed=random
+    - command: dart run build_runner test -- -p vm test/configurable_uri_test.dart --test-randomize-ordering-seed=random
 - e2e_test:
   - test: --total-shards 3 --shard-index 0 --test-randomize-ordering-seed=random
     os: linux
@@ -29,5 +29,5 @@ stages:
 # This stage is configured to only run for scheduled builds (see mono_repo.yaml)
 - e2e_test_cron:
   - test:
-    dart:
+    sdk:
     - be/raw/latest

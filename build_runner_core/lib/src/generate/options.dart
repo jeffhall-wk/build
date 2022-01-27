@@ -10,13 +10,11 @@ import 'package:build_config/build_config.dart';
 import 'package:build_resolvers/build_resolvers.dart';
 import 'package:glob/glob.dart';
 import 'package:logging/logging.dart';
-import 'package:meta/meta.dart';
 import 'package:path/path.dart' as p;
 
 import '../environment/build_environment.dart';
 import '../package_graph/package_graph.dart';
 import '../package_graph/target_graph.dart';
-import '../util/hash.dart';
 import 'exceptions.dart';
 
 /// The default list of files visible for non-root packages.
@@ -58,9 +56,8 @@ final _logger = Logger('BuildOptions');
 
 class LogSubscription {
   factory LogSubscription(BuildEnvironment environment,
-      {bool verbose, Level logLevel}) {
+      {bool verbose = false, Level? logLevel}) {
     // Set up logging
-    verbose ??= false;
     logLevel ??= verbose ? Level.ALL : Level.INFO;
 
     // Severe logs can fail the build and should always be shown.
@@ -114,16 +111,14 @@ class BuildFilter {
       _package.matches(id.package) && _path.matches(id.path);
 
   @override
-  int get hashCode {
-    var hash = 0;
-    hash = hashCombine(hash, _package.context.hashCode);
-    hash = hashCombine(hash, _package.pattern.hashCode);
-    hash = hashCombine(hash, _package.recursive.hashCode);
-    hash = hashCombine(hash, _path.context.hashCode);
-    hash = hashCombine(hash, _path.pattern.hashCode);
-    hash = hashCombine(hash, _path.recursive.hashCode);
-    return hashComplete(hash);
-  }
+  int get hashCode => Object.hash(
+        _package.context,
+        _package.pattern,
+        _package.recursive,
+        _path.context,
+        _path.pattern,
+        _path.recursive,
+      );
 
   @override
   bool operator ==(Object other) =>
@@ -143,7 +138,7 @@ class BuildOptions {
   final StreamSubscription logListener;
 
   /// If present, the path to a directory to write performance logs to.
-  final String logPerformanceDir;
+  final String? logPerformanceDir;
 
   final PackageGraph packageGraph;
   final Resolvers resolvers;
@@ -157,16 +152,16 @@ class BuildOptions {
   bool skipBuildScriptCheck;
 
   BuildOptions._({
-    @required this.debounceDelay,
-    @required this.deleteFilesByDefault,
-    @required this.enableLowResourcesMode,
-    @required this.logListener,
-    @required this.packageGraph,
-    @required this.skipBuildScriptCheck,
-    @required this.trackPerformance,
-    @required this.targetGraph,
-    @required this.logPerformanceDir,
-    @required this.resolvers,
+    required this.debounceDelay,
+    required this.deleteFilesByDefault,
+    required this.enableLowResourcesMode,
+    required this.logListener,
+    required this.packageGraph,
+    required this.skipBuildScriptCheck,
+    required this.trackPerformance,
+    required this.targetGraph,
+    required this.logPerformanceDir,
+    required this.resolvers,
   });
 
   /// Creates a [BuildOptions] with sane defaults.
@@ -175,15 +170,15 @@ class BuildOptions {
   /// enables [enabledExperiments] on any analysis options it creates.
   static Future<BuildOptions> create(
     LogSubscription logSubscription, {
-    Duration debounceDelay,
-    bool deleteFilesByDefault,
-    bool enableLowResourcesMode,
-    @required PackageGraph packageGraph,
-    Map<String, BuildConfig> overrideBuildConfig,
-    bool skipBuildScriptCheck,
-    bool trackPerformance,
-    String logPerformanceDir,
-    Resolvers resolvers,
+    Duration debounceDelay = const Duration(milliseconds: 250),
+    bool deleteFilesByDefault = false,
+    bool enableLowResourcesMode = false,
+    required PackageGraph packageGraph,
+    Map<String, BuildConfig> overrideBuildConfig = const {},
+    bool skipBuildScriptCheck = false,
+    bool trackPerformance = false,
+    String? logPerformanceDir,
+    Resolvers? resolvers,
   }) async {
     TargetGraph targetGraph;
     try {
@@ -197,17 +192,12 @@ class BuildOptions {
 Failed to parse `build.yaml` for ${e.packageName}.
 
 If you believe you have gotten this message in error, especially if using a new
-feature, you may need to run `pub run build_runner clean` and then rebuild.
+feature, you may need to run `dart run build_runner clean` and then rebuild.
 ''', e.exception, s);
       throw CannotBuildException();
     }
 
     /// Set up other defaults.
-    debounceDelay ??= const Duration(milliseconds: 250);
-    deleteFilesByDefault ??= false;
-    skipBuildScriptCheck ??= false;
-    enableLowResourcesMode ??= false;
-    trackPerformance ??= false;
     if (logPerformanceDir != null) {
       // Requiring this to be under the root package allows us to use an
       // `AssetWriter` to write logs.

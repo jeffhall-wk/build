@@ -15,15 +15,14 @@ import 'package:build_daemon/data/build_status.dart';
 import 'package:build_daemon/data/build_target.dart';
 import 'package:build_daemon/data/shutdown_notification.dart';
 import 'package:build_runner/src/daemon/constants.dart';
-import 'package:build_runner_core/src/util/constants.dart' show pubBinary;
+import 'package:build_runner_core/src/util/constants.dart' show dartBinary;
 import 'package:path/path.dart' as p;
-import 'package:pedantic/pedantic.dart';
 import 'package:test/test.dart';
 import 'package:test_descriptor/test_descriptor.dart' as d;
 
 void main() {
-  Process daemonProcess;
-  Stream<String> stdoutLines;
+  Process? daemonProcess;
+  Stream<String>? stdoutLines;
   String workspace() => p.join(d.sandbox, 'a');
   final webTarget = DefaultBuildTarget((b) => b..target = 'web');
   final testTarget = DefaultBuildTarget((b) => b..target = 'test');
@@ -43,6 +42,7 @@ void main() {
           'build_runner_core',
           'build_test',
           'build_web_compilers',
+          'code_builder',
           'test',
         ],
       ),
@@ -53,10 +53,17 @@ main() {
   print('hello');
 }'''),
       ]),
+      d.dir('lib', [
+        d.file('message.dart', '''
+const message = 'hello world';
+      '''),
+      ]),
       d.dir('web', [
         d.file('main.dart', '''
+import 'package:a/message.dart';
+
 main() {
-  print('hello world');
+  print(message);
 }'''),
       ]),
     ]).create();
@@ -77,24 +84,22 @@ main() {
   });
 
   Future<BuildDaemonClient> _startClient(
-      {BuildMode buildMode, List<String> options}) {
-    options ??= [];
-    buildMode ??= BuildMode.Auto;
+      {BuildMode buildMode = BuildMode.Auto, List<String> options = const []}) {
     var args = ['run', 'build_runner', 'daemon', ...options];
     printOnFailure('Starting client in: ${workspace()}');
     return BuildDaemonClient.connect(
         workspace(),
         [
-          pubBinary.toString(),
+          dartBinary,
           ...args,
         ],
         logHandler: (log) => printOnFailure('Client: ${log.message}'),
         buildMode: buildMode);
   }
 
-  Future<void> _startDaemon({BuildMode buildMode, List<String> options}) async {
-    options ??= [];
-    buildMode ??= BuildMode.Auto;
+  Future<void> _startDaemon(
+      {BuildMode buildMode = BuildMode.Auto,
+      List<String> options = const []}) async {
     var args = [
       'build_runner',
       'daemon',
@@ -102,24 +107,24 @@ main() {
       ...options
     ];
     printOnFailure('Starting daemon in: ${workspace()}');
-    daemonProcess = await startPub('a', 'run', args: args);
-    stdoutLines = daemonProcess.stdout
+    var daemon = daemonProcess = await startPub('a', 'run', args: args);
+    stdoutLines = daemon.stdout
         .transform(Utf8Decoder())
         .transform(LineSplitter())
         .asBroadcastStream()
-          ..listen((line) {
-            printOnFailure('Daemon: $line');
-          });
-    daemonProcess.stderr
+      ..listen((line) {
+        printOnFailure('Daemon: $line');
+      });
+    daemon.stderr
         .transform(Utf8Decoder())
         .transform(LineSplitter())
         .listen((line) {
       printOnFailure('Daemon Error: $line');
     });
-    unawaited(daemonProcess.exitCode.then((exitCode) {
+    unawaited(daemon.exitCode.then((exitCode) {
       printOnFailure('GOT EXIT CODE: $exitCode');
     }));
-    expect(await stdoutLines.contains(readyToConnectLog), isTrue);
+    expect(await stdoutLines!.contains(readyToConnectLog), isTrue);
   }
 
   group('Build Daemon', () {
@@ -144,6 +149,20 @@ main() {
       ]).create();
     });
 
+    test('supports --enable-experiment option', () async {
+      await _startDaemon(options: ['--enable-experiment=fake-experiment']);
+      var client =
+          await _startClient(options: ['--enable-experiment=fake-experiment'])
+            ..registerBuildTarget(webTarget)
+            ..startBuild();
+      clients.add(client);
+      await expectLater(
+          client.buildResults,
+          // TODO: Check for specific message about a bad experiment
+          emitsThrough((BuildResults b) =>
+              b.results.first.status == BuildStatus.failed));
+    });
+
     test('does not shut down down on build script change when configured',
         () async {
       await _startDaemon(options: ['--skip-build-script-check']);
@@ -151,7 +170,7 @@ main() {
         ..registerBuildTarget(webTarget)
         ..startBuild();
       clients.add(client);
-      ShutdownNotification notification;
+      ShutdownNotification? notification;
       // We need to add a listener otherwise we won't get the event.
       unawaited(client.shutdownNotifications.first
           .then((value) => notification = value));
@@ -228,6 +247,7 @@ main() {
       ]).create();
       // There shouldn't be any build results.
       var buildResults = await client.buildResults.first
+          .then<BuildResults?>((r) => r)
           .timeout(Duration(seconds: 2), onTimeout: () => null);
       expect(buildResults, isNull);
       client.startBuild();

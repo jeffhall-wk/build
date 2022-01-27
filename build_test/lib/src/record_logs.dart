@@ -4,9 +4,10 @@
 
 import 'dart:async';
 
+// ignore: implementation_imports
 import 'package:build/src/builder/logging.dart';
-import 'package:matcher/matcher.dart';
 import 'package:logging/logging.dart';
+import 'package:matcher/matcher.dart';
 
 /// Executes [run] with a new [Logger], returning the resulting log records.
 ///

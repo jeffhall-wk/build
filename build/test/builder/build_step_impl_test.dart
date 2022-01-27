@@ -5,17 +5,15 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:build/build.dart';
 import 'package:build/src/builder/build_step.dart';
+import 'package:build/src/builder/build_step_impl.dart';
 import 'package:build_resolvers/build_resolvers.dart';
 import 'package:build_test/build_test.dart';
-import 'package:pedantic/pedantic.dart';
 import 'package:test/test.dart';
 
-import 'package:build/build.dart';
-import 'package:build/src/builder/build_step_impl.dart';
-
 void main() {
-  ResourceManager resourceManager;
+  late ResourceManager resourceManager;
 
   setUp(() {
     resourceManager = ResourceManager();
@@ -26,15 +24,17 @@ void main() {
   });
 
   group('with reader/writer stub', () {
-    AssetId primary;
-    BuildStepImpl buildStep;
+    late AssetId primary;
+    late BuildStepImpl buildStep;
+    late List<AssetId> outputs;
 
     setUp(() {
       var reader = StubAssetReader();
       var writer = StubAssetWriter();
       primary = makeAssetId();
-      buildStep = BuildStepImpl(
-          primary, [], reader, writer, AnalyzerResolvers(), resourceManager);
+      outputs = List.generate(5, (index) => makeAssetId());
+      buildStep = BuildStepImpl(primary, outputs, reader, writer,
+          AnalyzerResolvers(), resourceManager);
     });
 
     test('doesnt allow non-expected outputs', () {
@@ -45,17 +45,34 @@ void main() {
           throwsA(TypeMatcher<UnexpectedOutputException>()));
     });
 
+    test('reports allowed outputs', () {
+      expect(buildStep.allowedOutputs, outputs);
+    });
+
     test('fetchResource can fetch resources', () async {
       var expected = 1;
       var intResource = Resource(() => expected);
       var actual = await buildStep.fetchResource(intResource);
       expect(actual, expected);
     });
+
+    test('does not allow multiple writes to the same output', () async {
+      final id = outputs.first;
+      await buildStep.writeAsString(id, 'foo');
+
+      final expectedException = isA<InvalidOutputException>()
+          .having((e) => e.assetId, 'assetId', id)
+          .having((e) => e.message, 'message', contains('already wrote to'));
+
+      expect(
+          () => buildStep.writeAsString(id, 'bar'), throwsA(expectedException));
+      expect(() => buildStep.writeAsBytes(id, []), throwsA(expectedException));
+    });
   });
 
   group('with in memory file system', () {
-    InMemoryAssetWriter writer;
-    InMemoryAssetReader reader;
+    late InMemoryAssetWriter writer;
+    late InMemoryAssetReader reader;
 
     setUp(() {
       writer = InMemoryAssetWriter();
@@ -106,7 +123,7 @@ void main() {
             isTrue);
 
         var bLib = await resolver.findLibraryByName('b');
-        expect(bLib.name, 'b');
+        expect(bLib!.name, 'b');
         expect(bLib.importedLibraries.length, 1);
 
         await buildStep.complete();
@@ -115,10 +132,10 @@ void main() {
   });
 
   group('With slow writes', () {
-    BuildStepImpl buildStep;
-    SlowAssetWriter assetWriter;
-    AssetId outputId;
-    String outputContent;
+    late BuildStepImpl buildStep;
+    late SlowAssetWriter assetWriter;
+    late AssetId outputId;
+    late String outputContent;
 
     setUp(() async {
       var primary = makeAssetId();
@@ -164,9 +181,9 @@ void main() {
   });
 
   group('With erroring writes', () {
-    AssetId primary;
-    BuildStepImpl buildStep;
-    AssetId output;
+    late AssetId primary;
+    late BuildStepImpl buildStep;
+    late AssetId output;
 
     setUp(() {
       var reader = StubAssetReader();
@@ -202,7 +219,7 @@ void main() {
 }
 
 class SlowAssetWriter implements AssetWriter {
-  final _writeCompleter = Completer<Null>();
+  final _writeCompleter = Completer<void>();
 
   void finishWrite() {
     _writeCompleter.complete(null);

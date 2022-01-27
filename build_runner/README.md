@@ -1,9 +1,6 @@
 <p align="center">
   Standalone generator and watcher for Dart using <a href="https://pub.dev/packages/build"><code>package:build</code></a>.
   <br>
-  <a href="https://travis-ci.org/dart-lang/build">
-    <img src="https://travis-ci.org/dart-lang/build.svg?branch=master" alt="Build Status" />
-  </a>
   <a href="https://github.com/dart-lang/build/labels/package%3A%20build_runner">
     <img src="https://img.shields.io/github/issues-raw/dart-lang/build/package%3A%20build_runner.svg" alt="Issues related to build_runner" />
   </a>
@@ -64,7 +61,7 @@ To have web code compiled to js add a `dev_dependency` on `build_web_compilers`.
 ### Built-in Commands
 
 The `build_runner` package exposes a binary by the same name, which can be
-invoked using `pub run build_runner <command>`.
+invoked using `dart run build_runner <command>`.
 
 The available commands are `build`, `watch`, `serve`, and `test`.
 
@@ -75,7 +72,7 @@ The available commands are `build`, `watch`, `serve`, and `test`.
   - By default this serves the `web` and `test` directories, on port `8080` and
     `8081` respectively. See below for how to configure this.
 - `test`: Runs a single build, creates a merged output directory, and then runs
-  `pub run test --precompiled <merged-output-dir>`. See below for instructions
+  `dart run test --precompiled <merged-output-dir>`. See below for instructions
   on passing custom args to the test command.
 
 #### Command Line Options
@@ -95,24 +92,20 @@ Some commands also have additional options:
 
 - `--hostname`: The host to run the server on.
 - `--live-reload`: Enables automatic page reloading on rebuilds.
-  Can't be used together with `--hot-reload`.
-- `--hot-reload`: Enables automatic reloading of changed modules on rebuilds.
-  See [hot-module-reloading](../docs/hot_module_reloading.md) for more info.
-  Can't be used together with `--live-reload`.
 
 Trailing args of the form `<directory>:<port>` are supported to customize what
 directories are served, and on what ports.
 
 For example to serve the `example` and `web` directories on ports 8000 and 8001
-you would do `pub run build_runner serve example:8000 web:8001`.
+you would do `dart run build_runner serve example:8000 web:8001`.
 
 ##### test
 
 The test command will forward any arguments after an empty `--` arg to the
-`pub run test` command.
+`dart run test` command.
 
 For example if you wanted to pass `-p chrome` you would do
-`pub run build_runner test -- -p chrome`.
+`dart run build_runner test -- -p chrome`.
 
 ### Inputs
 
@@ -207,7 +200,7 @@ changes (like documentation, minor bug fixes), just send a pull request.
 
 ### Testing
 
-All pull requests are validated against [travis][travis], and must pass. The
+All pull requests are validated against CI, and must pass. The
 `build_runner` package lives in a mono repository with other `build` packages,
 and _all_ of the following checks must pass for _each_ package.
 
@@ -226,7 +219,7 @@ $ dartfmt -w .
 Run all of our unit tests:
 
 ```sh
-$ pub run test
+$ dart run test
 ```
 
 [Bazel]: https://bazel.build/
@@ -238,7 +231,6 @@ $ pub run test
 [builder_application]: https://pub.dev/documentation/build_runner/latest/build_runner/BuilderApplication-class.html
 [build_extensions]: https://pub.dev/documentation/build/latest/build/Builder/buildExtensions.html
 
-[travis]: https://travis-ci.org/
 [dev_sdk]: https://dart.dev/get-dart
 [dev_dependencies]: https://dart.dev/tools/pub/dependencies#dev-dependencies
 [pubspec]: https://dart.dev/tools/pub/pubspec

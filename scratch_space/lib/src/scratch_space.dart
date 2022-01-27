@@ -8,7 +8,6 @@ import 'dart:io';
 import 'package:build/build.dart';
 import 'package:crypto/crypto.dart';
 import 'package:path/path.dart' as p;
-import 'package:pedantic/pedantic.dart';
 import 'package:pool/pool.dart';
 
 import 'util.dart';
@@ -79,7 +78,7 @@ class ScratchSpace {
         // of pending writes but don't care about the result.
       }
     }
-    return tempDir.delete(recursive: true);
+    await tempDir.delete(recursive: true);
   }
 
   /// Copies [assetIds] to [tempDir] if they don't exist, using [reader] to
@@ -117,7 +116,8 @@ class ScratchSpace {
                   await file.writeAsBytes(await reader.readAsBytes(id));
                 }));
       } finally {
-        unawaited(_pendingWrites.remove(id));
+        // TODO: Remove ?? fallback once 2.15 hits stable.
+        unawaited(_pendingWrites.remove(id) ?? Future.value());
       }
     }).toList();
 

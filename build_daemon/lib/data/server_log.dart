@@ -14,13 +14,21 @@ part 'server_log.g.dart';
 class Level extends EnumClass with Comparable<Level> {
   static Serializer<Level> get serializer => _$levelSerializer;
 
+  // ignore: constant_identifier_names
   static const Level FINEST = _$finest;
+  // ignore: constant_identifier_names
   static const Level FINER = _$finer;
+  // ignore: constant_identifier_names
   static const Level FINE = _$fine;
+  // ignore: constant_identifier_names
   static const Level CONFIG = _$config;
+  // ignore: constant_identifier_names
   static const Level INFO = _$info;
+  // ignore: constant_identifier_names
   static const Level WARNING = _$warning;
+  // ignore: constant_identifier_names
   static const Level SEVERE = _$severe;
+  // ignore: constant_identifier_names
   static const Level SHOUT = _$shout;
 
   const Level._(String name) : super(name);
@@ -69,12 +77,12 @@ abstract class ServerLog implements Built<ServerLog, ServerLogBuilder> {
         ..message = record.message
         ..level = Level.valueOf(record.level.name)
         ..loggerName = record.loggerName
-        ..error = record?.error?.toString()
+        ..error = record.error?.toString()
         ..stackTrace = record.stackTrace?.toString());
 
   logging.LogRecord toLogRecord() {
     return logging.LogRecord(toLoggingLevel(level), message, loggerName ?? '',
-        error, stackTrace == null ? null : StackTrace.fromString(stackTrace));
+        error, stackTrace == null ? null : StackTrace.fromString(stackTrace!));
   }
 
   ServerLog._();
@@ -83,12 +91,9 @@ abstract class ServerLog implements Built<ServerLog, ServerLogBuilder> {
 
   String get message;
 
-  @nullable
-  String get loggerName;
+  String? get loggerName;
 
-  @nullable
-  String get error;
+  String? get error;
 
-  @nullable
-  String get stackTrace;
+  String? get stackTrace;
 }

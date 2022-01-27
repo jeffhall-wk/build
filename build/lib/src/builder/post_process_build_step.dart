@@ -7,7 +7,7 @@ import 'dart:convert';
 
 import 'package:async/async.dart';
 import 'package:build/build.dart';
-import 'package:crypto/src/digest.dart';
+import 'package:crypto/crypto.dart' show Digest;
 
 // This is not exported to hack around a package-private constructor.
 PostProcessBuildStep postProcessBuildStep(
@@ -76,4 +76,4 @@ class PostProcessBuildStep {
 
 Future<void> _futureOrWrite<T>(
         FutureOr<T> content, Future<void> Function(T content) write) =>
-    (content is Future<T>) ? content.then(write) : write(content as T);
+    (content is Future<T>) ? content.then(write) : write(content);
