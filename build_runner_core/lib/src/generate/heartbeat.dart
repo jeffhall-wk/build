@@ -127,7 +127,7 @@ class HungActionsHeartbeat extends Heartbeat {
   HungActionsHeartbeat(
     this.listActions, {
     Duration checkInterval = const Duration(milliseconds: 100),
-    Duration waitDuration = const Duration(seconds: 15),
+    Duration waitDuration = const Duration(seconds: 1),
   }) : super(checkInterval: checkInterval, waitDuration: waitDuration);
 
   @override
