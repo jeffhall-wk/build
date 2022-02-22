@@ -143,8 +143,9 @@ class ServeHandler implements BuildState {
     var hideSkipped = false;
     var detailedSlices = false;
     var slicesResolution = 5;
-    var sortOrder = PerfSortOrder.startTimeAsc;
+    var sortOrder = PerfSortOrder.durationDesc;
     var filter = request.url.queryParameters['filter'] ?? '';
+    var limit = 100;
     if (request.url.queryParameters['hideSkipped']?.toLowerCase() == 'true') {
       hideSkipped = true;
     }
@@ -160,9 +161,12 @@ class ServeHandler implements BuildState {
       sortOrder = PerfSortOrder
           .values[int.parse(request.url.queryParameters['sortOrder'])];
     }
+    if (request.url.queryParameters.containsKey('limit')) {
+      limit = int.parse(request.url.queryParameters['limit']);
+    }
     return shelf.Response.ok(
         _renderPerformance(_lastBuildResult.performance, hideSkipped,
-            detailedSlices, slicesResolution, sortOrder, filter),
+            detailedSlices, slicesResolution, sortOrder, filter, limit),
         headers: {HttpHeaders.contentTypeHeader: 'text/html'});
   }
 
@@ -400,7 +404,8 @@ String _renderPerformance(
     bool detailedSlices,
     int slicesResolution,
     PerfSortOrder sortOrder,
-    String filter) {
+    String filter,
+    int limit) {
   try {
     var rows = StringBuffer();
     final resolution = Duration(milliseconds: slicesResolution);
@@ -482,7 +487,12 @@ String _renderPerformance(
     }
     actions.sort(comparator);
 
+    int actionsCount = 0;
     for (var action in actions) {
+      if (actionsCount >= limit) {
+        continue;
+      }
+      actionsCount++;
       if (hideSkipped &&
           !action.stages.any((stage) => stage.label == 'Build')) {
         continue;
@@ -545,6 +555,7 @@ String _renderPerformance(
 
           console.log('rendering', $count, 'blocks, max', $maxSlices,
             'slices in stage, resolution', $slicesResolution, 'ms');
+          console.log('ONLY RENDERING $limit ACTIONS');
           var options = {
             tooltip: { isHtml: true }
           };
